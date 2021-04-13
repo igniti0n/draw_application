@@ -1,23 +1,22 @@
-import 'package:flutter/material.dart';
-import 'package:paint_app/domain/entities/draw_point.dart';
-import 'package:paint_app/domain/entities/drawing.dart';
+import '../../domain/entities/canvas_path.dart';
+import '../../domain/entities/drawing.dart';
 
 class DrawingModel extends Drawing {
   DrawingModel({
-    required List<DrawPoint> drawPoints,
+    required List<CanvasPath> canvasPaths,
   }) : super(
-          drawPoints: drawPoints,
+          canvasPaths: canvasPaths,
         );
 
   factory DrawingModel.fromJson(Map<String, dynamic> map) {
     return DrawingModel(
-      drawPoints: map['drawPoints'],
+      canvasPaths: map['canvasPaths'],
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'drawPoints': this.drawPoints,
+      'canvasPaths': this.canvasPaths,
     };
   }
 }

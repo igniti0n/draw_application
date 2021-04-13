@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:paint_app/view/painter_screen/settings_cubit/settings_cubit.dart';
+import 'package:paint_app/view/painter_screen/drawing_bloc/drawing_bloc.dart';
+import 'package:paint_app/view/painter_screen/settings_bloc/settings_bloc.dart';
 
 import 'view/painter_screen/paint_page.dart';
 
@@ -27,8 +28,15 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: BlocProvider(
-        create: (context) => SettingsCubit(),
+      home: MultiBlocProvider(
+        providers: [
+          BlocProvider<DrawingBloc>(
+            create: (_) => DrawingBloc(),
+          ),
+          BlocProvider<SettingsBloc>(
+            create: (_) => SettingsBloc(),
+          ),
+        ],
         child: PaintPage(),
       ),
     );

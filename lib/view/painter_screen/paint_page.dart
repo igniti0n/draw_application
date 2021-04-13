@@ -1,21 +1,17 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:paint_app/domain/entities/settings.dart';
-import 'package:paint_app/view/painter_screen/settings_cubit/settings_cubit.dart';
+import 'package:paint_app/domain/entities/canvas_path.dart';
+import 'package:paint_app/view/painter_screen/drawing_bloc/drawing_bloc.dart';
+import 'package:paint_app/view/painter_screen/settings_bloc/settings_bloc.dart';
 
 import '../../domain/entities/drawing.dart';
 import 'app_painter.dart';
 
-class PaintPage extends StatefulWidget {
-  const PaintPage({Key? key}) : super(key: key);
-
-  @override
-  _PaintPageState createState() => _PaintPageState();
-}
-
-class _PaintPageState extends State<PaintPage> {
-  double strokeWidth = 2.0;
-  Color drawColor = Colors.purple;
+class PaintPage extends StatelessWidget {
+  // double strokeWidth = 2.0;
+  // Color drawColor = Colors.purple;
 
   @override
   Widget build(BuildContext context) {
@@ -31,23 +27,29 @@ class _PaintPageState extends State<PaintPage> {
           Expanded(
             child: ClipPath(
               clipper: CanvasClipper(),
-              child: StreamBuilder<SettingsState>(
-                  stream:
-                      BlocProvider.of<SettingsCubit>(context).settingsStream,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      final PaintSettings _paintSettings =
-                          snapshot.data!.paintSettings;
-                      return PaintCanvas(
-                        drawColor: _paintSettings.drawColor,
-                        strokeWidth: _paintSettings.strokeWidth,
-                      );
-                    }
-                    return PaintCanvas(
-                      drawColor: Colors.black,
-                      strokeWidth: 2,
-                    );
-                  }),
+              child:
+                  BlocBuilder<DrawingBloc, DrawingState>(builder: (ctx, state) {
+                //log("Drawing bloc state:" + state.toString());
+                return PaintCanvas(
+                  initialdrawPoints: state.currentDrawing,
+                );
+              }),
+              // StreamBuilder<PathsState>(
+              //     stream: BlocProvider.of<PathsCubit>(context).settingsStream,
+              //     builder: (context, snapshot) {
+              //       log("data changed: ${snapshot.data}");
+              //       log("connection state: ${snapshot.connectionState}");
+              //       if (snapshot.hasData) {
+              //         return PaintCanvas(
+              //           initialdrawPoints: snapshot.data!.canvasPaths,
+              //         );
+              //       }
+              //       return PaintCanvas(
+              //         initialdrawPoints: snapshot.data == null
+              //             ? []
+              //             : snapshot.data!.canvasPaths,
+              //       );
+              //     }),
             ),
           ),
           ConstrainedBox(
@@ -60,22 +62,47 @@ class _PaintPageState extends State<PaintPage> {
                 children: [
                   Expanded(
                     child: TextButton(
-                      onPressed: () => BlocProvider.of<SettingsCubit>(context)
-                          .changeSettings(PaintSettings(
-                        drawColor: Colors.black,
-                        strokeWidth: 2,
-                      )),
+                      onPressed: () =>
+                          BlocProvider.of<SettingsBloc>(context).add(
+                        SettingsColorChanged(Colors.black),
+                      ),
                       child: Text('crna'),
                     ),
                   ),
                   Expanded(
                     child: TextButton(
-                      onPressed: () => BlocProvider.of<SettingsCubit>(context)
-                          .changeSettings(PaintSettings(
-                        drawColor: Colors.red,
-                        strokeWidth: 2,
-                      )),
+                      onPressed: () =>
+                          BlocProvider.of<SettingsBloc>(context).add(
+                        SettingsColorChanged(Colors.red),
+                      ),
                       child: Text('crvena'),
+                    ),
+                  ),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () =>
+                          BlocProvider.of<SettingsBloc>(context).add(
+                        SettingsStrokeWidthChanged(50),
+                      ),
+                      child: Text('width 20'),
+                    ),
+                  ),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () =>
+                          BlocProvider.of<SettingsBloc>(context).add(
+                        SettingsStrokeWidthChanged(10),
+                      ),
+                      child: Text('width 10'),
+                    ),
+                  ),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () =>
+                          BlocProvider.of<DrawingBloc>(context).add(
+                        Undo(),
+                      ),
+                      child: Text('undo'),
                     ),
                   ),
                 ],
@@ -89,15 +116,11 @@ class _PaintPageState extends State<PaintPage> {
 }
 
 class PaintCanvas extends StatefulWidget {
-  final List<DrawPoint> initialdrawPoints;
-  final double strokeWidth;
-  final Color drawColor;
+  final List<CanvasPath> initialdrawPoints;
 
   const PaintCanvas({
     Key? key,
     this.initialdrawPoints = const [],
-    required this.drawColor,
-    required this.strokeWidth,
   }) : super(key: key);
 
   @override
@@ -105,48 +128,82 @@ class PaintCanvas extends StatefulWidget {
 }
 
 class _PaintCanvasState extends State<PaintCanvas> {
-  List<Offset> drawPoints = [];
+  Paint _currentPaintSettings = Paint();
 
-  @override
-  void initState() {
-    super.initState();
-    drawPoints = List.from(widget.initialdrawPoints);
-  }
+  CanvasPath _newPath = CanvasPath(
+    paint: Paint(),
+    drawPoints: [],
+  );
 
   void addPoint(Offset newPoint) {
-    setState(() {
-      drawPoints.add(newPoint);
-    });
+    _newPath.quadric(newPoint.dx, newPoint.dy);
+    _newPath.drawPoints.add(newPoint);
+    BlocProvider.of<DrawingBloc>(context).add(UpdateDrawing(_newPath));
+  }
+
+  void addLastPoint() {
+    final Offset _lastOffset = _newPath.drawPoints.last;
+
+    final Offset _additionalOffset =
+        Offset(_lastOffset.dx + 10, _lastOffset.dy + 10);
+
+    _newPath.drawPoints.add(_additionalOffset);
+    BlocProvider.of<DrawingBloc>(context).add(UpdateDrawing(_newPath));
+  }
+
+  Paint _paintFrom(Paint paint) {
+    return Paint()
+      ..color = paint.color
+      ..strokeWidth = paint.strokeWidth
+      ..blendMode = paint.blendMode
+      ..strokeCap = paint.strokeCap
+      ..shader = paint.shader;
   }
 
   @override
   Widget build(BuildContext context) {
     final _size = MediaQuery.of(context).size;
-    return CustomPaint(
-      isComplex: true,
-      foregroundPainter: AppPainter(
-        drawing: Drawing(
-          canvasPaths: [],
-        ),
-      ),
-      child: GestureDetector(
-        onPanStart: (det) => addPoint(
-          Offset(det.localPosition.dx, det.localPosition.dy),
-        ),
-        onPanEnd: (det) => addPoint(
-          Offset(-10, -10),
-        ),
-        onPanUpdate: (det) => addPoint(
-          Offset(det.localPosition.dx, det.localPosition.dy),
-        ),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: _size.height,
-            maxWidth: _size.width,
+    final _drawingBloc = BlocProvider.of<DrawingBloc>(context);
+
+    return BlocBuilder<DrawingBloc, DrawingState>(
+      builder: (context, state) {
+        return CustomPaint(
+          isComplex: true,
+          foregroundPainter: AppPainter(
+            drawing: Drawing(
+              canvasPaths: state.currentDrawing,
+            ),
           ),
-          color: Colors.white,
-        ),
-      ),
+          child: BlocListener<SettingsBloc, SettingsState>(
+            listener: (context, state) {
+              _currentPaintSettings = state.paintSettings;
+            },
+            child: GestureDetector(
+              onPanStart: (det) {
+                _newPath = CanvasPath(
+                    paint: _paintFrom(_currentPaintSettings),
+                    drawPoints: [
+                      det.localPosition,
+                    ]);
+                _newPath.movePathTo(det.localPosition.dx, det.localPosition.dy);
+
+                _drawingBloc.add(StartDrawing(_newPath));
+              },
+              onPanUpdate: (det) => addPoint(
+                Offset(det.localPosition.dx, det.localPosition.dy),
+              ),
+              onPanEnd: (det) => addLastPoint(),
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: _size.height,
+                  maxWidth: _size.width,
+                ),
+                color: Colors.white,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

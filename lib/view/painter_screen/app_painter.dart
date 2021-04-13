@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -19,70 +20,60 @@ class AppPainter extends CustomPainter {
     required this.drawing,
   });
 
-  var _path = Path();
-
   @override
   void paint(Canvas canvas, Size size) {
     // log("PAINTING");
-    final List<CanvasPath> drawPoints = drawing.canvasPaths;
+    final List<CanvasPath> canvasPaths = drawing.canvasPaths;
 
-    final _paint = Paint();
-    final _mousePressPaint = Paint();
+    var _paint = Paint();
 
-    if (drawPoints.isNotEmpty) {
-      drawPoints.forEach((CanvasPath canvasPath) {
-        canvasPath.movePathTo(
-          drawPoints[0].drawPoint.dx,
-          drawPoints[0].drawPoint.dy,
-        );
-      });
+    // let's pretend this rectangle is an image.
+    // in this case, we don't want anything erased from the image,
+    // and we also want the image to be drawn under the eraser.
 
-      bool _shouldMovePath = false;
+    if (canvasPaths.isNotEmpty) {
+      canvasPaths.forEach((CanvasPath canvasPath) {
+        if (canvasPath.drawPoints.isNotEmpty) {
+          final Paint _currentPathSettings = canvasPath.paint;
+          // canvas.saveLayer(
+          //     Rect.fromLTWH(0, 0, size.width, size.height), Paint());
+          //
+          //
+          // canvas.drawRect(
+          //     Rect.fromLTWH(100, 100, 100, 100), Paint()..color = Colors.white);
 
-      _mousePressPaint
-        ..color = drawPoints[0].drawColor
-        ..strokeWidth = drawPoints[0].strokeWidth
-        ..style = PaintingStyle.fill
-        ..isAntiAlias = true
-        ..blendMode = BlendMode.src;
+          // // after having drawn our image, we start a new layer using saveLayer().
+          // canvas.saveLayer(
+          //     Rect.fromLTWH(0, 0, size.width, size.height), Paint());
 
-      canvas.drawCircle(drawPoints[0].drawPoint, drawPoints[0].strokeWidth / 2,
-          _mousePressPaint);
+          _paint = canvasPath.paint..style = PaintingStyle.stroke;
 
-      drawPoints.forEach((DrawPoint drawPoint) {
-        _paint
-          ..color = drawPoint.drawColor
-          ..strokeWidth = drawPoint.strokeWidth
-          ..style = PaintingStyle.stroke
-          ..isAntiAlias = true
-          ..blendMode = BlendMode.src;
+          final _raidus = math.sqrt(_currentPathSettings.strokeWidth) / 20;
 
-        _mousePressPaint
-          ..color = drawPoint.drawColor
-          ..strokeWidth = drawPoint.strokeWidth
-          ..style = PaintingStyle.fill
-          ..isAntiAlias = true
-          ..blendMode = BlendMode.src;
+          canvas.drawPath(canvasPath.path, _paint);
 
-        if (_shouldMovePath) {
-          _path.moveTo(drawPoint.drawPoint.dx, drawPoint.drawPoint.dy);
-          canvas.drawCircle(
-              drawPoint.drawPoint, drawPoint.strokeWidth / 2, _mousePressPaint);
-
-          _shouldMovePath = false;
-        } else if (drawPoint.drawPoint.dx < 0) {
-          _shouldMovePath = true;
-        } else {
-          _shouldMovePath = false;
-          _path.lineTo(drawPoint.drawPoint.dx, drawPoint.drawPoint.dy);
+          for (int i = 0; i < canvasPath.drawPoints.length - 1; i++) {
+            // canvas.drawLine(canvasPath.drawPoints[i],
+            //     canvasPath.drawPoints[i + 1], _paint);
+            canvas.drawCircle(canvasPath.drawPoints[i], _raidus, _paint);
+          }
         }
+
+        // erasing parts of the first line where intersected with this line.
+        // canvas.drawLine(
+        //     Offset(100, 600),
+        //     Offset(600, 100),
+        //     Paint()
+        //       ..color = Colors.red
+        //       ..strokeWidth = 5.0
+        //       ..blendMode = BlendMode.clear);
+
+        // first composite this layer and then draw it over the previously drawn layers.
+        // canvas.restore();
       });
-      canvas.drawPath(_path, _paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant AppPainter oldDelegate) {
-    return true;
-  }
+  bool shouldRepaint(covariant AppPainter oldDelegate) => true;
 }

@@ -17,7 +17,7 @@ class SettingsStrokeWidthChanged extends SettingsEvent {
   const SettingsStrokeWidthChanged(this.strokeWidth);
 }
 
-class SettingsColorChanged extends SettingsEvent {
-  final Color color;
-  const SettingsColorChanged(this.color);
-}
+// class SettingsColorChanged extends SettingsEvent {
+//   final Color color;
+//   const SettingsColorChanged(this.color);
+// }

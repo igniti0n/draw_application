@@ -11,7 +11,7 @@ part 'drawing_state.dart';
 
 class DrawingBloc extends Bloc<DrawingEvent, DrawingState> {
   DrawingBloc() : super(DrawingInitial(const []));
-  // List<CanvasPath> drawingPaths = [];
+
   Drawing _drawing = Drawing(canvasPaths: []);
 
   @override

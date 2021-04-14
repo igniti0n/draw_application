@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:paint_app/domain/entities/canvas_path.dart';
@@ -10,18 +8,9 @@ import '../../domain/entities/drawing.dart';
 import 'app_painter.dart';
 
 class PaintPage extends StatelessWidget {
-  // double strokeWidth = 2.0;
-  // Color drawColor = Colors.purple;
-
   @override
   Widget build(BuildContext context) {
-    //  log(drawPoints.toString());
-
     return Scaffold(
-      // bottomSheet: Container(
-      //   height: 200,
-      //   color: Colors.blueGrey,
-      // ),
       body: Column(
         children: [
           Expanded(
@@ -34,22 +23,6 @@ class PaintPage extends StatelessWidget {
                   initialdrawPoints: state.currentDrawing,
                 );
               }),
-              // StreamBuilder<PathsState>(
-              //     stream: BlocProvider.of<PathsCubit>(context).settingsStream,
-              //     builder: (context, snapshot) {
-              //       log("data changed: ${snapshot.data}");
-              //       log("connection state: ${snapshot.connectionState}");
-              //       if (snapshot.hasData) {
-              //         return PaintCanvas(
-              //           initialdrawPoints: snapshot.data!.canvasPaths,
-              //         );
-              //       }
-              //       return PaintCanvas(
-              //         initialdrawPoints: snapshot.data == null
-              //             ? []
-              //             : snapshot.data!.canvasPaths,
-              //       );
-              //     }),
             ),
           ),
           ConstrainedBox(
@@ -64,36 +37,55 @@ class PaintPage extends StatelessWidget {
                     child: TextButton(
                       onPressed: () =>
                           BlocProvider.of<SettingsBloc>(context).add(
-                        SettingsColorChanged(Colors.black),
+                        SettingsChanged(
+                          Paint()
+                            ..color = Colors.black
+                            ..blendMode = BlendMode.srcOver,
+                        ),
                       ),
-                      child: Text('crna'),
+                      child: Text('black'),
                     ),
                   ),
                   Expanded(
                     child: TextButton(
                       onPressed: () =>
                           BlocProvider.of<SettingsBloc>(context).add(
-                        SettingsColorChanged(Colors.red),
+                        SettingsChanged(
+                          Paint()
+                            ..color = Colors.red
+                            ..blendMode = BlendMode.srcOver,
+                        ),
                       ),
-                      child: Text('crvena'),
+                      child: Text('red'),
                     ),
                   ),
                   Expanded(
                     child: TextButton(
                       onPressed: () =>
                           BlocProvider.of<SettingsBloc>(context).add(
-                        SettingsStrokeWidthChanged(50),
+                        SettingsChanged(
+                          Paint()..blendMode = BlendMode.clear,
+                        ),
                       ),
-                      child: Text('width 20'),
+                      child: Text('erase'),
                     ),
                   ),
                   Expanded(
                     child: TextButton(
-                      onPressed: () =>
-                          BlocProvider.of<SettingsBloc>(context).add(
-                        SettingsStrokeWidthChanged(10),
-                      ),
-                      child: Text('width 10'),
+                      onPressed: () {
+                        BlocProvider.of<SettingsBloc>(context)
+                            .add(SettingsStrokeWidthChanged(-0.5));
+                      },
+                      child: Text('-0.5'),
+                    ),
+                  ),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () {
+                        BlocProvider.of<SettingsBloc>(context)
+                            .add(SettingsStrokeWidthChanged(0.5));
+                      },
+                      child: Text('+0.5'),
                     ),
                   ),
                   Expanded(
@@ -102,7 +94,7 @@ class PaintPage extends StatelessWidget {
                           BlocProvider.of<DrawingBloc>(context).add(
                         Undo(),
                       ),
-                      child: Text('undo'),
+                      child: Text('Undo'),
                     ),
                   ),
                 ],
@@ -128,15 +120,22 @@ class PaintCanvas extends StatefulWidget {
 }
 
 class _PaintCanvasState extends State<PaintCanvas> {
-  Paint _currentPaintSettings = Paint();
+  Paint _currentPaintSettings = Paint()
+    ..strokeWidth = 1
+    ..color = Colors.black;
 
   CanvasPath _newPath = CanvasPath(
-    paint: Paint(),
+    paint: Paint()
+      ..strokeWidth = 1
+      ..color = Colors.black,
     drawPoints: [],
   );
 
   void addPoint(Offset newPoint) {
-    _newPath.quadric(newPoint.dx, newPoint.dy);
+    _newPath.quadric(
+      newPoint.dx,
+      newPoint.dy,
+    );
     _newPath.drawPoints.add(newPoint);
     BlocProvider.of<DrawingBloc>(context).add(UpdateDrawing(_newPath));
   }
@@ -169,6 +168,7 @@ class _PaintCanvasState extends State<PaintCanvas> {
       builder: (context, state) {
         return CustomPaint(
           isComplex: true,
+          willChange: true,
           foregroundPainter: AppPainter(
             drawing: Drawing(
               canvasPaths: state.currentDrawing,

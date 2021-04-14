@@ -28,9 +28,10 @@ class CanvasPath extends Equatable {
     final _distance =
         (sqrt(pow(x - drawPoints.last.dx, 2) + pow(y - drawPoints.last.dy, 2)));
 
-    dev.log("distance:    " + _distance.toString());
-
-    if (_distance > 0.8)
+    //  dev.log("distance:    " + _distance.toString());
+    if (paint.strokeWidth <= 2)
+      path.quadraticBezierTo(drawPoints.last.dx, drawPoints.last.dy, x, y);
+    else if (_distance > 3)
       // path.arcToPoint(Offset(x, y));
       path.quadraticBezierTo(drawPoints.last.dx, drawPoints.last.dy, x, y);
     else

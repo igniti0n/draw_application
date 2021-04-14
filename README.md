@@ -1,6 +1,5 @@
-# paint_app
 
-A new Flutter project.
+Example application of one idea on implementing drawing, erasing, undo in your application.
 
 ## Getting Started
 

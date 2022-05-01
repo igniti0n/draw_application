@@ -1,15 +1,8 @@
 
-Example application of one idea on implementing drawing, erasing, undo in your application.
+An app for creating animatable sketches 😄
 
-## Getting Started
+Build in Flutter, to try and showcase the use of CustomPainter and an example approach to make a drawing application. 
 
-This project is a starting point for a Flutter application.
+I explained my solution in approaching this problem here: https://ivanstajcer.medium.com/flutter-drawing-erasing-and-undo-with-custompainter-6d00fec2bbc2
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Link on app store: https://play.google.com/store/apps/details?id=com.animated_drawings_application
